@@ -58,7 +58,8 @@ dostart()
 #        nohup sslocal ‐c /etc/shadowsocks/shadowsocks.json > /tmp/shadowsocks.log 2>&1 &
     else
         echo "sslocal is starting"
-        nohup sslocal ‐c /etc/shadowsocks/shadowsocks.json > /tmp/shadowsocks.log 2>&1 &
+        ##下面的这个地方，可能有点儿问题。启动的时候会报错。这个地方需要注意下。需要手动启动。
+        nohup /usr/bin/python /usr/local/bin/sslocal -c /etc/shadowsocks/shadowsocks.json >> /tmp/shadowsocks.log 2>&1 &
         echo "sslocal is started"
     fi
 
