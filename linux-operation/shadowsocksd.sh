@@ -84,8 +84,6 @@ dostart()
         echo "http_proxy is setted"
 
     fi
-
-
 }
 dostop()
 {
