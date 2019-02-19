@@ -14,6 +14,7 @@ export CATALINA_BASE=/usr/local/tomcat
 ### The below is using the tomcat user.and ,if you want to use root, please change the scripts 
 #TOMCATUSER=tomcat
 
+##这个地方可以写成一个函数，带返回那种，调用一次函数，变量的值就会跟着变化的，现在是一个变量，就不再变化了。整个脚本运行过程都是。。。
 PID=$(ps -aux |grep $CATALINA_HOME|grep java  |grep -v grep |awk '{print $2}')
 
 start_tomcat()
