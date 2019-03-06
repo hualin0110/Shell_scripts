@@ -6,6 +6,10 @@
 RETVAL=0
 
 ### if you want to use in you system ,please change the PATH about JAVA_HOME  CATALINA_HOME CATALINA_BASE ....#####
+#获取当前应用所在目录
+##basepath=$(cd `dirname $0`; cd .. ; pwd)
+#
+
 
 export JAVA_HOME=/usr
 export CATALINA_HOME=/usr/local/tomcat
@@ -25,6 +29,7 @@ start_tomcat()
         then
             echo "Starting Tomcat"
             /bin/sh $CATALINA_HOME/bin/startup.sh
+            ##$?获取shell中命令的结束代码
             RETVAL=$?
             echo " OK"
             return $RETVAL
