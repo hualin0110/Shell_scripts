@@ -5,7 +5,7 @@
 
 ##设置安装日志的路径，正常日志以及错误日志。
 Log_Path="tmp/soft_install"
-LOG="$Log_Path/install.log
+LOG="$Log_Path/install.log"
 ERRORLOG="$Log_Path/install.error"
 
 if [[ ! -d $Log_Path ]]; then
@@ -135,7 +135,7 @@ ssh_set(){
 	fi
 }
 
-server_setting(){
+service_setting(){
 	get_time
 	apps='acpid anacron atd auditd autofs avahi-daemon bluetooth cpuspeed cups firstboot gpm haldaemon hidd hplip ip6tables irqbalance  isdn kudzu lvm2-monitor mcstrans mdmonitor messagebus microcode nfslock pcscd portmap readahead_early readahead_later restorecond rpcgssd  rpcidmapd postfix setroubleshoot smartd xinetd iptables nscd '
 	for i in $apps; do
@@ -222,12 +222,12 @@ modify_yumrepo(){
 		wget http://mirrors.myhuaweicloud.com/repo/mirrors_source.sh && sh mirrors_source.sh
 		RETVAL=$?
 		if [ $RETVAL -eq 0 ]; then
-			echo "the changing of yum_repos is already over  " |tee -a $LOG
+			echo "The changing of yum_repos is already over  " |tee -a $LOG
 		else
 			echo "The changing of yum_repos  is ERROR ,please chech the network of system and so on  " |tee -a $ERRORLOG
 		fi
 	else
-
+        echo "The repo of yum is already setted" |tee -a $LOG
 	fi
 }
 
@@ -236,7 +236,7 @@ safe_rm(){
 	if [[ ! -d $safe_rm_dir ]]; then
 		mkdir $safe_rm_dir
 	fi
-	cat >>/usr/local/saferm.sh <<"EOF"
+	cat >/usr/local/saferm.sh <<"EOF"
 #!/bin/bash
 #author: huaxuelin
 #date: 2019-04-02
@@ -290,7 +290,7 @@ system_init() {
 	sleep 2
 	time_set
 	sleep 2
-	server_setting
+	service_setting
 	sleep 2
 	system_core
 	sleep 2

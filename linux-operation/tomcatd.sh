@@ -10,10 +10,13 @@ RETVAL=0
 ##basepath=$(cd `dirname $0`; cd .. ; pwd)
 #
 
+basepath=$(cd `dirname $0`; cd .. ; pwd)
 
-export JAVA_HOME=/usr
-export CATALINA_HOME=/usr/local/tomcat
-export CATALINA_BASE=/usr/local/tomcat
+# CATALINA_HOME="/opt/apache-tomcat"
+javahome=`dirname $(dirname $(which java))`
+export JAVA_HOME=$javahome
+export CATALINA_HOME=$basepath
+export CATALINA_BASE=$basepath
 
 ### The below is using the tomcat user.and ,if you want to use root, please change the scripts 
 #TOMCATUSER=tomcat
