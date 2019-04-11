@@ -229,6 +229,8 @@ modify_yumrepo(){
 	else
         echo "The repo of yum is already setted" |tee -a $LOG
 	fi
+	yum -y install lrzsz sysstat tree expect vixie-cron syslog xfs yum-updatesd nc dos2unix telnet
+
 }
 
 safe_rm(){
@@ -275,6 +277,111 @@ EOF
 
 }
 
+fonts_install(){
+    #此函数必须在“modify_yumrepo” 函数执行之后才能执行。否则可能会出现不能使用yum安装命令的情况。
+    #此函数only use in zqsign.com
+    get_time
+
+    font_dir="/usr/share/fonts/simsun"
+    if [[ ! -d $font_dir ]]; then
+        mkdir $font_dir
+        echo "mkdir dir $font_dir " |tee -a $LOG
+    fi
+    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@192.168.0.43:/soft/fonts/simsun/* $font_dir/
+    yum install -y mkfontscale  fontconfig
+    mkfontscale && mkfontdir && fc-cache -fv
+    fc-list :lang=zh
+}
+
+ntp_install(){
+    #
+    get_time
+    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@192.168.0.43:/soft/ntp/install_ntp_v2.sh  ./ && sh install_ntp_v2.sh
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ]; then
+        echo "The service of ntpd is already setted " |tee -a $LOG
+    else
+        echo "It is going wrong when service of ntpd being install,please check it  " |tee -a $ERRORLOG
+    fi
+
+}
+
+host_rename(){
+    #when use this function,please in this fashion:"hostname zqsign",and the parameter of "zqsign" is what you want to set for the hostmechine
+    get_time
+    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@192.168.0.43:/soft/scripts/rename_v0.1.sh  ./ && sh rename_v0.1.sh $1
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ]; then
+        echo "The hostname is already resetting ,please reconnect this host mechine " |tee -a $LOG
+    else
+        echo "It is going wrong when setting hostname ,please check it  " |tee -a $ERRORLOG
+    fi
+}
+
+jdk_install(){
+    get_time
+    java_dir="/usr/local/java"
+    java_value=$(rpm -qa |grep -e ^java|wc -l)
+    value_diyjavapath=$(egrep "JAVA_HOME|JRE_HOME" /etc/profile |wc -l )
+    if [[ $java_value -gt 0 ]]; then
+        yum remove java*
+    else
+        echo "there is no java in this system "
+    fi
+
+    if [[ ! -d "/usr/java" || ! -d "/usr/local/jdk" ]]; then
+        /bin/rm -rf /usr/java && /bin/rm -rf /usr/local/jdk
+    fi
+    if [[ ! -d $java_dir ]]; then
+        mkdir $java_dir
+        echo "mkdir dir $java_dir " |tee -a $LOG
+    else
+        bin/rm -rf $java_dir/*
+    fi
+
+    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@192.168.0.43:/soft/java/jdk-8u171-linux-x64.tar.gz $java_dir
+    tar xzf $java_dir/jdk-8u171-linux-x64.tar.gz -C $java_dir/
+    mv $java_dir/jdk1.8.0_171/* $java_dir/
+    /bin/rm -rf $java_dir/jdk1.8.0_171 $java_dir/jdk-8u171-linux-x64.tar.gz
+
+    if [[ $value_diyjavapath -ge 1 ]]; then
+        for i in JAVA_HOME JRE_HOME PATH CLASS_PATH;do
+            sed -i "/$i/d" /etc/profile
+            sed -i "/#Set environment variables for Java/d" /etc/profile
+        done
+    fi
+
+cat >>/etc/profile <<"EOF"
+#Set environment variables for Java by 郁唯
+export PATH=/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+export JAVA_HOME=/usr/local/java
+export JRE_HOME=/usr/local/java/jre
+export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH
+export CLASS_PATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib
+EOF
+    source /etc/profile
+
+    if [[ $(java -version 2>&1|grep "1.8"|wc -l)  -gt 0 ]];then
+        echo "java 1.8  is already be installed in this system" |tee -a $LOG
+    fi
+}
+
+tomcat_install(){
+    get_time
+    value_tomcat_dir=$(ls /usr/local/ |grep tomcat |wc -l)
+    tomcat_dir="/usr/local/tomcat"
+    if [ $value_tomcat_dir -ne 0 ]; then
+        /bin/rm -rf /usr/local/*tomcat*
+    fi
+    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@192.168.0.43:/soft/tomcat/apache-tomcat-8.0.52.tar.gz /usr/local/src/
+    tar /usr/local/src/apache-tomcat-8.0.52.tar.gz -C /usr/local/src/
+    mv /usr/local/src/apache-tomcat-8.0.52 /usr/local/tomcat
+    echo "Install tomcat is already done " |tee -a $LOG
+}
+
+nginx_install(){
+    echo ""
+}
 
 system_init() {
 	##此函数将设置调整一些系统的服务参数
@@ -290,10 +397,63 @@ system_init() {
 	sleep 2
 	time_set
 	sleep 2
+	modify_yumrepo
+	sleep 2
 	service_setting
 	sleep 2
 	system_core
 	sleep 2
 	safe_rm
+	sleep 2
+	fonts_install
+	sleep 2
+	ntp_install
+	sleep 2
+	host_rename zqsign
+	sleep 2
+    jdk_install
+    sleep 2
+    tomcat_install
 }
+
+if [[ $# -eq 0 ]]; then
+    echo "The funciton of this scripts is [close_X11,change_vim,ssh_set,close_iptables,close_selinux,time_set,modify_yumrepo,service_setting,system_core,safe_rm,fonts_install,ntp_install,host_rename,jdk_install.tomcat_install ] ,this function can be used by option of '-m' and '-s' "
+    echo "Usage: $0 -a  is install all functions"
+    echo "Usage: $0 -s function   install a single function"
+    echo "Usage: $0 -m function1 function2 ....   install multiple functions"
+    echo "Usage: $0 -h  print the help messages"
+
+elif [[ $# -eq 1 ]]; then
+    case $1 in
+        -a)
+            echo "Will install all funciton , please pay attention"
+            system_init
+        ;;
+        -h)
+            echo "Usage: $0 -a  is install all functions"
+            echo "Usage: $0 -s function   install a single function"
+            echo "Usage: $0 -m function1 function2 ....   install multiple functions"
+            echo "Usage: $0 -h  print the help messages"
+                ;;
+    esac
+elif [[ $# -gt 1 ]]; then
+    case $1 in
+        -s)
+            echo "Start install $2"
+            $2
+        ;;
+        -m)
+            for i in $*
+            do
+                if [[ $i == "-m" ]]; then
+                    continue
+                else
+                    $i
+                fi
+            done
+            echo "done"
+        ;;
+    esac
+fi
+
 

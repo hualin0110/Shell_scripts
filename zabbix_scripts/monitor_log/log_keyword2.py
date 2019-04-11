@@ -6,7 +6,7 @@
 # Create Date :  2015-1-9
 # Written by : shanks
 # Version : 1.0
-#python-version:2
+#python-version:2.X
 #########################################################################
 import sys,commands,os
 
@@ -38,7 +38,7 @@ def check_log(log_path ,error_key):
     if os.path.exists(log_path):
         pass;
     else:
-        print '\nERROR  ' +log_path +' not found!!!'
+        print('\nERROR  ' +log_path +' not found!!!')
         show_help()
     # 从zabbix_monitor_log_tmp中找到log_path上一次读取的最后一行的行号，如果之前没有记录，则认为是从第一行开始
     init_log_tmp(log_path);
@@ -62,8 +62,8 @@ def check_log(log_path ,error_key):
         cha = log_path_line
     elif int(log_path_line) == int(log_path_line_last):
         # 说明日志文件没有发生任何变化，直接打印0并退出
-        key_count = 0;
-        print key_count;
+        key_count = 0
+        print(key_count)
         sys.exit(0)
     else:
         cha = int(log_path_line) - int(log_path_line_last);
@@ -77,9 +77,9 @@ def check_log(log_path ,error_key):
     # print "检测上次的行数%s"%log_path_line_last
     # # 获取关键词在时间范围内出现的次数
     # key_count = commands.getoutput('tail -n ' +str(cha ) +'  ' +log_path +'|grep -cE " ' +error_key_new +'"');
-    print 'tail -n %s %s |grep -cE "%s"'%(str(cha),log_path,error_key_new)
+    print('tail -n %s %s |grep -cE "%s"'%(str(cha),log_path,error_key_new))
     key_count = commands.getoutput('tail -n %s %s |grep -cE "%s"'%(str(cha),log_path,error_key_new))
-    print key_count;
+    print(key_count)
     # 更新tmp中log_path的行数
     with open(zabbix_monitor_log_tmp, 'w') as c_tmp_file:
         c_tmp_file.write('%s %s\n' % (log_path, str(log_path_line)))

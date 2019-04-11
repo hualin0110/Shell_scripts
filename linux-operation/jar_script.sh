@@ -14,7 +14,7 @@ BASEPATH=$(cd `dirname $0`; pwd)
 #获取当前项目的jar包名称
 JARFILE=$(ls *jar)
 #获取当前项目的项目名
-PROG=$(echo $JARFILE | awk -F '.' '{ print $1 }' )
+PROG=$(echo $JARFILE | awk -F '.jar' '{ print $1 }' )
 #自定义PIDFILE路径
 PIDFILE=$BASEPATH/$PROG.pid
 
@@ -62,7 +62,8 @@ case "$1" in
             echo "Starting $PROG ..."
             ##-u 添加文件到jar中的指定目录，-v显示过程；-f指定jar包；
 #            jar  -uvf $JARFILE BOOT-INF/classes/*.properties BOOT-INF/classes/*.xml
-            java $JAVA_OPTS  -jar $JARFILE >/dev/null &
+#            nohup $JAVA_OPTS java -jar $BASEPATH/$JARFILE >/dev/null 2>&1 &
+            nohup java -jar $BASEPATH/$JARFILE >/dev/null 2>&1 &
             ##$?获取shell中命令的结束代码
             RETVAL=$?
             if [ $RETVAL -eq 0 ]; then
