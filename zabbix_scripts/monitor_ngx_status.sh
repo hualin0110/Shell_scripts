@@ -4,6 +4,16 @@
 #zabbix监控nginx性能以及进程状态
 #此脚本需要安装在被监控端
 
+:<<EOF
+需要在zabbix客户端配置以下内容：
+需要将此monitor_ngx_status.sh存放到zabbix目录的scripts目录下，并且可能需要赋予此脚本zabbix用户的权限;
+#cat /usr/local/zabbix/etc/zabbix_agentd.conf | grep nginx
+UserParameter=nginx.status[*],/usr/local/zabbix/scripts/monitor_ngx-status.sh $1
+# killall zabbix_agentd
+# /usr/local/zabbix-3.0.0/sbin/zabbix_agentd
+EOF
+
+
 Host_ip="127.0.0.1"
 Host_port="80"
 
