@@ -10,7 +10,7 @@
 #cat /usr/local/zabbix/etc/zabbix_agentd.conf | grep nginx
 UserParameter=nginx.status[*],/usr/local/zabbix/scripts/monitor_ngx-status.sh $1
 # killall zabbix_agentd
-# /usr/local/zabbix-3.0.0/sbin/zabbix_agentd
+# /usr/local/zabbix/sbin/zabbix_agentd
 EOF
 
 
