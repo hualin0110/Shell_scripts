@@ -15,6 +15,7 @@ cd $log_path
 echo "$today" >catalina.out
 tar czfP catalina.$yest_day.tgz catalina.$yest_day.out
 
-find ./ -type f -mtime +30 -name "catalina*out"|xargs rm -rf
-find ./ -type f -mtime +3 -name "catalina*log"|xargs rm -rf
+find ./ -type f -mtime +10 -name "catalina*out"|xargs rm -rf
+find ./ -type f -mtime +10 -name "catalina*log"|xargs rm -rf
+find ./ -type f -mtime +10 -name "server_log*log"|xargs rm -rf
 #find ./ -type f -mtime +30 |xargs rm -rf

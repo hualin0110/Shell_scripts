@@ -4,7 +4,7 @@
 #system version :CentOS 6.x
 
 ##设置安装日志的路径，正常日志以及错误日志。
-Log_Path="tmp/soft_install"
+Log_Path="/tmp/soft_install"
 LOG="$Log_Path/install.log"
 ERRORLOG="$Log_Path/install.error"
 
@@ -21,16 +21,17 @@ ipfull=`ip a|grep -B1 -C1 -w "${IN_Face}"|grep -w 'inet'|awk '{print $2}'|awk -F
 ##获取时间
 get_time(){
 	current_time=$(date +'%Y-%m-%d %H:%M:%S')
-	echo "$current_time =====>>" |tee -a  $LOG
+	echo "$current_time =====>>$1" |tee -a  $LOG
 
 }
 
 close_X11() {
+	get_time "Start the funciton close_X11"
 	is_X11=`grep "id:5:initdefault" /etc/inittab |wc -l `
 	if [ $is_X11 -eq 1 ];then
 		echo -e "The runlevel of system is 5, need to change it"
 		sed -i 's/id:5:initdefault/id:3:initdefault/g' /etc/inittab
-		get_time
+		get_time 
 		echo -e "The runlevel of system is change from 5 to 3  \nend" |tee -a  $LOG
 	elif [[ $is_X11 -eq 0 ]]; then
 		get_time
@@ -93,6 +94,7 @@ time_set(){
 	#这个地方的ntp.api.bz，如果主机是内网且有内网时间服务器，可以修改为内网服务器地址
 	if [[ -z `grep 'ntp.api.bz' /var/spool/cron/root` ]]
 	then
+	    echo 'MAILTO=""' >> /var/spool/cron/root
 		echo "*/10 * * * * /usr/sbin/ntpdate -u ntp.api.bz > /dev/null  2>&1" >> /var/spool/cron/root
 	fi
 	get_time
@@ -417,7 +419,8 @@ system_init() {
 }
 
 if [[ $# -eq 0 ]]; then
-    echo "The funciton of this scripts is [close_X11,change_vim,ssh_set,close_iptables,close_selinux,time_set,modify_yumrepo,service_setting,system_core,safe_rm,fonts_install,ntp_install,host_rename,jdk_install.tomcat_install ] ,this function can be used by option of '-m' and '-s' "
+	\033[32m file handel has been successfully changed \033[0m
+    echo -e  "\033[32m The funciton of this scripts is [close_X11,change_vim,ssh_set,close_iptables,close_selinux,time_set,modify_yumrepo,service_setting,system_core,safe_rm,fonts_install,ntp_install,host_rename,jdk_install.tomcat_install ] ,this function can be used by option of '-m' and '-s' \033[0m "
     echo "Usage: $0 -a  is install all functions"
     echo "Usage: $0 -s function   install a single function"
     echo "Usage: $0 -m function1 function2 ....   install multiple functions"
