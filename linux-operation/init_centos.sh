@@ -2,15 +2,17 @@
 # Time : 2019/4/1
 # Author : "郁唯"
 #system version :CentOS 6.x
+#此脚本需要用bash命令而非sh命令运行。
 
 ##设置安装日志的路径，正常日志以及错误日志。
 Log_Path="/tmp/soft_install"
 LOG="$Log_Path/install.log"
 ERRORLOG="$Log_Path/install.error"
 
-if [[ ! -d $Log_Path ]]; then
-	mkdir $Log_Path
+if [[ ! -d $Log_Path ]];then
+    mkdir $Log_Path
 fi
+
 echo > ${LOG}
 echo > ${ERRORLOG}
 
@@ -448,10 +450,11 @@ elif [[ $# -gt 1 ]]; then
         -m)
             for i in $*
             do
-                if [[ $i == "-m" ]]; then
+                if [[ $i = "-m" ]]; then
                     continue
                 else
-                    $i
+                    echo "$i"
+#                    $i
                 fi
             done
             echo "done"
