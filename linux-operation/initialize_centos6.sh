@@ -211,7 +211,7 @@ EOF
 	if [[ -z `grep 'hard nofile 65536' /etc/security/limits.conf` ]];then
 		echo '* soft nofile 65536' >> /etc/security/limits.conf 
 		echo '* hard nofile 65536' >> /etc/security/limits.conf
-		echo -e "\033[32m file handel has been successfully changed \033[0m"
+		echo -e "\033[1;32m file handel has been successfully changed \033[0m"
 		ulimit -SHn 65536
 		echo "ulimit -SH 65535" >>/etc/rc.local
 		echo "1. change ulimit to 65535 success" |tee -a $LOG
@@ -252,13 +252,13 @@ trash_file=$*
 
 case $1 in
 	-f )
-	echo "\033[32m please use the command 'rm' directly,do not use '-f' \033[0m"
+	echo "\033[1;32m please use the command 'rm' directly,do not use '-f' \033[0m"
 		;;
 	-rf )
-	echo "\033[32m please use the command 'rm' directly,do not use '-rf' \033[0m"
+	echo "\033[1;32m please use the command 'rm' directly,do not use '-rf' \033[0m"
 		;;
 	-h )
-	echo "\033[32m do not need use any parameters only with this method of 'rm -a filename ...'  \033[0m"
+	echo "\033[1;32m do not need use any parameters only with this method of 'rm -a filename ...'  \033[0m"
 		;;
 	-a )
 		for i in $trash_file ;do
@@ -272,7 +272,7 @@ case $1 in
 			done
 		;;
 	* )
-	echo "\033[32m do not need use any parameters only with this method of 'rm -a filename ...'  \033[0m"
+	echo "\033[1;32m do not need use any parameters only with this method of 'rm -a filename ...'  \033[0m"
 		;;
 esac
 EOF
@@ -421,8 +421,8 @@ system_init() {
 }
 
 if [[ $# -eq 0 ]]; then
-	\033[32m file handel has been successfully changed \033[0m
-    echo -e  "\033[32m The funciton of this scripts is [close_X11,change_vim,ssh_set,close_iptables,close_selinux,time_set,modify_yumrepo,service_setting,system_core,safe_rm,fonts_install,ntp_install,host_rename,jdk_install.tomcat_install ] ,this function can be used by option of '-m' and '-s' \033[0m "
+	\033[1;32m file handel has been successfully changed \033[0m
+    echo -e  "\033[1;32m The funciton of this scripts is [close_X11,change_vim,ssh_set,close_iptables,close_selinux,time_set,modify_yumrepo,service_setting,system_core,safe_rm,fonts_install,ntp_install,host_rename,jdk_install.tomcat_install ] ,this function can be used by option of '-m' and '-s' \033[0m "
     echo "Usage: $0 -a  is install all functions"
     echo "Usage: $0 -s function   install a single function"
     echo "Usage: $0 -m function1 function2 ....   install multiple functions"
@@ -439,7 +439,15 @@ elif [[ $# -eq 1 ]]; then
             echo "Usage: $0 -s function   install a single function"
             echo "Usage: $0 -m function1 function2 ....   install multiple functions"
             echo "Usage: $0 -h  print the help messages"
-                ;;
+        ;;
+        *)
+        \033[1;32m file handel has been successfully changed \033[0m
+        echo -e  "\033[1;32m The funciton of this scripts is [close_X11,change_vim,ssh_set,close_iptables,close_selinux,time_set,modify_yumrepo,service_setting,system_core,safe_rm,fonts_install,ntp_install,host_rename,jdk_install.tomcat_install ] ,this function can be used by option of '-m' and '-s' \033[0m "
+        echo "Usage: $0 -a  is install all functions"
+        echo "Usage: $0 -s function   install a single function"
+        echo "Usage: $0 -m function1 function2 ....   install multiple functions"
+        echo "Usage: $0 -h  print the help messages"
+        ;;
     esac
 elif [[ $# -gt 1 ]]; then
     case $1 in
