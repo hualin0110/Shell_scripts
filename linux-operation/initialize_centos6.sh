@@ -9,6 +9,16 @@ Log_Path="/tmp/soft_install"
 LOG="$Log_Path/install.log"
 ERRORLOG="$Log_Path/install.error"
 
+##software from remote host
+#huaweicloud
+remote_repositories="192.168.0.43"
+#taixing
+#remote_repositories="192.168.1.210"
+#ntp服务器server，如果是内网，请在此处填写内网地址。如果直接从外网同步时间，就用下面的ntp.api.bz
+ntp_server="ntp.api.bz"
+
+
+
 if [[ ! -d $Log_Path ]];then
     mkdir $Log_Path
 fi
@@ -23,7 +33,7 @@ ipfull=`ip a|grep -B1 -C1 -w "${IN_Face}"|grep -w 'inet'|awk '{print $2}'|awk -F
 ##获取时间
 get_time(){
 	current_time=$(date +'%Y-%m-%d %H:%M:%S')
-	echo "$current_time =====>>$1" |tee -a  $LOG
+	echo -e "$current_time =====>>$1" |tee -a  $LOG
 
 }
 
@@ -33,14 +43,13 @@ close_X11() {
 	if [ $is_X11 -eq 1 ];then
 		echo -e "The runlevel of system is 5, need to change it"
 		sed -i 's/id:5:initdefault/id:3:initdefault/g' /etc/inittab
-		get_time 
-		echo -e "The runlevel of system is change from 5 to 3  \nend" |tee -a  $LOG
+		get_time "The runlevel of system is change from 5 to 3  \nend"
+#		echo -e "The runlevel of system is change from 5 to 3  \nend" |tee -a  $LOG
 	elif [[ $is_X11 -eq 0 ]]; then
-		get_time
-		echo -e "The runlevel of system is 3, don't need to change it "|tee -a  $LOG
+		get_time "The runlevel of system is 3, don't need to change it "
 	else
 		get_time
-		echo "The changing about runlevel of system is failed,please check it " |tee -a  $ERRORLOG
+		echo -e "\033[1;31mThe changing about runlevel of system is failed,please check it [0m" |tee -a  $ERRORLOG
 	fi
 }
 
@@ -52,64 +61,58 @@ change_vim(){
 	echo 'set shiftwidth=2' >> ~/.vimrc
 	echo 'set expandtab' >> ~/.vimrc
 	echo 'set fencs=cp936,utf-8,ucs-bom,gbk,gb18030,gb2312 ' >> ~/.vimrc
-	get_time
-	echo -e "The Setting of vim is already changed  \nend" |tee -a  $LOG
+	get_time "The Setting of vim is already changed  \nend"
 }
 close_iptables(){
 	is_down=`chkconfig --list iptables|grep on |wc -l`
 	if [[ $is_down -eq 1 ]]; then
 		chkconfig iptables off
-		get_time
-		echo -e "The iptables is already stoped  \nend" |tee -a  $LOG
+		get_time "The iptables is already stoped  \nend"
 	else
-		get_time
-		echo -e "The iptables is not started  \nend" |tee -a  $LOG
+		get_time "The iptables is not started  \nend"
 	fi
 
 }
 
 close_selinux(){
-	get_time
-	sed -i 's/SELINK=enforcing/SELINK=disabled/' /etc/selinux/config
-	sed -i 's/SELINK=enforcing/SELINK=disabled/' /etc/sysconfig/selinux
+	get_time "start to close selinux"
+	sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
+	sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux
 	setenforce 0
 	value_selinux=`getenforce`
 	conf_selinux=`grep "SELINK=disabled" /etc/selinux/config|wc -l `
 	if [[ $value_selinux == "Permissive" && $conf_selinux -eq 1  ]]; then
-		echo -e " selinux has successsfully shutdown！" |tee -a $LOG
+		get_time " selinux has successsfully shutdown!"
 	else
-		echo -e "shutdown Selinux is ERROR" |tee -a $ERRORLOG
+		get_time "shutdown Selinux is ERROR"
 	fi
 }
 
 time_set(){
-	get_time
-	echo "start set timezone and it's crontab" |tee -a $LOG
+	get_time "start set timezone and it's crontab"
 	mv /etc/sysconfig/clock /etc/sysconfig/clock.bak
 	echo 'ZONE="Asia/Shanghai"' >/etc/sysconfig/clock
 	echo 'UTC=true' >>/etc/sysconfig/clock
 	echo 'ARC=false' >>/etc/sysconfig/clock
 	cp /usr/share/zoneinfo/Asia/Shanghai /tmp/tmp
 	mv -f /tmp/tmp /etc/localtime
-	get_time
-	echo "The timezone is already setted " |tee -a $LOG
+	get_time "The timezone is already setted "
 	#这个地方的ntp.api.bz，如果主机是内网且有内网时间服务器，可以修改为内网服务器地址
 	if [[ -z `grep 'ntp.api.bz' /var/spool/cron/root` ]]
 	then
 	    echo 'MAILTO=""' >> /var/spool/cron/root
 		echo "*/10 * * * * /usr/sbin/ntpdate -u ntp.api.bz > /dev/null  2>&1" >> /var/spool/cron/root
 	fi
-	get_time
-	echo "The crontab of datetime is already setted  " |tee -a $LOG
+	get_time "The crontab of datetime is already setted"
 }
 ssh_set(){
-	get_time
+	get_time "配置ssh的客户端不断开，并且其他主机连接过来的时候，不使用dns检查是否有该主机"
 	value_sshalive=$(grep -e "^TCPKeepAlive yes" /etc/ssh/sshd_config |wc  -l)
 	value_clientalive=$(grep -e "^ClientAliveInterval" /etc/ssh/sshd_config |wc  -l)
 	value_usedns=$(grep 'UseDNS no' /etc/ssh/sshd_config |wc -l)
 
 	if [[ $value_sshalive -eq 0 ]]; then
-		echo "TCPKeepAlive yes" >>/etc/ssh/sshd_config  tee -a $LOG
+		echo "TCPKeepAlive yes" >>/etc/ssh/sshd_config | tee -a $LOG
 	fi
 
 	if [[ $value_clientalive -eq 0 ]]; then
@@ -129,7 +132,6 @@ ssh_set(){
 	else
 		echo "The changing of UseDNS is Error ,please check it by yourself" |tee -a $ERRORLOG
 	fi
-
 	/etc/init.d/sshd restart
 	RETVAL=$?
 	if [ $RETVAL -eq 0 ]; then
@@ -137,10 +139,13 @@ ssh_set(){
 	else
 		echo "The service of sshd has go wrong when restarting" |tee -a $ERRORLOG
 	fi
+
+	get_time "配置免密登录"
+	rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@$remote_repositories:/soft/ssh/* /root/.ssh/
 }
 
 service_setting(){
-	get_time
+	get_time "设置开机启动的服务"
 	apps='acpid anacron atd auditd autofs avahi-daemon bluetooth cpuspeed cups firstboot gpm haldaemon hidd hplip ip6tables irqbalance  isdn kudzu lvm2-monitor mcstrans mdmonitor messagebus microcode nfslock pcscd portmap readahead_early readahead_later restorecond rpcgssd  rpcidmapd postfix setroubleshoot smartd xinetd iptables nscd '
 	for i in $apps; do
 		chkconfig $i off
@@ -157,14 +162,13 @@ service_setting(){
 	chkconfig --level 2345 sysstat on
 	chkconfig --level 2345 xfs on
 	chkconfig --level 2345 yum-updatesd on
-	get_time
-	echo "The usefull service  is already setting chkconfig on " |tee -a $LOG
+	get_time  "The usefull service  is already setting chkconfig on"
 
 }
 
 system_core(){
 	##调整系统内核参数
-	get_time
+	get_time "调整系统内核参数"
 	echo "" > /etc/sysctl.conf
 	cat >> /etc/sysctl.conf <<EOF
 net.ipv4.ip_forward = 0
@@ -207,7 +211,7 @@ EOF
 		echo "The changing of the system core is ERROR ,please chech the options of system core " |tee -a $ERRORLOG
 	fi
 
-	get_time
+	get_time "打开文件描述符数量"
 	if [[ -z `grep 'hard nofile 65536' /etc/security/limits.conf` ]];then
 		echo '* soft nofile 65536' >> /etc/security/limits.conf 
 		echo '* hard nofile 65536' >> /etc/security/limits.conf
@@ -220,20 +224,28 @@ EOF
 }
 
 modify_yumrepo(){
-	get_time
-	value_hwmirror=`grep myhuawei CentOS-Base.repo |wc -l`
-	if [[ $value_hwmirror -eq 0 ]]; then
-		wget http://mirrors.myhuaweicloud.com/repo/mirrors_source.sh && sh mirrors_source.sh
-		RETVAL=$?
-		if [ $RETVAL -eq 0 ]; then
-			echo "The changing of yum_repos is already over  " |tee -a $LOG
-		else
-			echo "The changing of yum_repos  is ERROR ,please chech the network of system and so on  " |tee -a $ERRORLOG
-		fi
-	else
-        echo "The repo of yum is already setted" |tee -a $LOG
-	fi
-	yum -y install lrzsz sysstat tree expect vixie-cron syslog xfs yum-updatesd nc dos2unix telnet
+	get_time "配置yum源"
+	yum install -y wget
+	cp -a  /etc/yum.repos.d /etc/yum.repos.d.bak
+	rm -rf /etc/yum.repos.d/*
+#	value_hwmirror=`grep myhuawei CentOS-Base.repo |wc -l`
+#	if [[ $value_hwmirror -eq 0 ]]; then
+#		wget http://mirrors.myhuaweicloud.com/repo/mirrors_source.sh && sh mirrors_source.sh
+#		RETVAL=$?
+#		if [ $RETVAL -eq 0 ]; then
+#			echo "The changing of yum_repos is already over  " |tee -a $LOG
+#		else
+#			echo "The changing of yum_repos  is ERROR ,please chech the network of system and so on  " |tee -a $ERRORLOG
+#		fi
+#	else
+#        echo "The repo of yum is already setted" |tee -a $LOG
+#	fi
+    ##华为云的rpm仓库，线上需要使用这个
+    #wget http://mirrors.myhuaweicloud.com/repo/mirrors_source.sh && sh mirrors_source.sh
+    ##华为云用上面注释掉的那个部分，泰兴用下面这条命令
+	wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-6.repo
+
+	yum -y install lrzsz sysstat tree expect vixie-cron syslog xfs yum-updatesd nc dos2unix telnet vim rsync openssh openssh-server openssh-clients
 
 }
 
@@ -247,18 +259,24 @@ safe_rm(){
 #author: huaxuelin
 #date: 2019-04-02
 #please do not remove this shell scripts,it is a command scritp for safe rm.
+
 Trash_Dir="/tmp/.trash/"
 trash_file=$*
 
+if [[ ! -d $Trash_Dir ]];then
+    mkdir $Trash_Dir
+fi
+
+
 case $1 in
 	-f )
-	echo "\033[32m please use the command 'rm' directly,do not use '-f' \033[0m"
+	echo -e "\033[32m please use the command 'rm' directly,do not use '-f' \033[0m"
 		;;
 	-rf )
-	echo "\033[32m please use the command 'rm' directly,do not use '-rf' \033[0m"
+	echo -e "\033[32m please use the command 'rm' directly,do not use '-rf' \033[0m"
 		;;
 	-h )
-	echo "\033[32m do not need use any parameters only with this method of 'rm -a filename ...'  \033[0m"
+	echo -e "\033[32m do not need use any parameters only with this method of 'rm -a filename ...'  \033[0m"
 		;;
 	-a )
 		for i in $trash_file ;do
@@ -272,35 +290,35 @@ case $1 in
 			done
 		;;
 	* )
-	echo "\033[32m do not need use any parameters only with this method of 'rm -a filename ...'  \033[0m"
+	echo -e "\033[1;32m do not need use any parameters only with this method of 'rm -a filename ...' \033[0m"
 		;;
 esac
 EOF
 	echo 'alias rm="sh /usr/local/saferm.sh"' >> /root/.bashrc
-	echo "#below set for clean old remove files !!! warning ,do not remove it \n0 0 * * * find  /tmp/.trash/ -mtime +7 |xargs /bin/rm -rf "
+	echo "#below set for clean old remove files !!! warning ,do not remove it \n0 0 * * * find  /tmp/.trash/ -mtime +7 |xargs /bin/rm -rf  > /dev/null  2>&1 " >> /var/spool/cron/root
 
 }
 
 fonts_install(){
     #此函数必须在“modify_yumrepo” 函数执行之后才能执行。否则可能会出现不能使用yum安装命令的情况。
     #此函数only use in zqsign.com
-    get_time
-
+    get_time "配置系统字体"
     font_dir="/usr/share/fonts/simsun"
     if [[ ! -d $font_dir ]]; then
         mkdir $font_dir
         echo "mkdir dir $font_dir " |tee -a $LOG
     fi
-    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@192.168.0.43:/soft/fonts/simsun/* $font_dir/
+    echo $remote_repositories
+    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@$remote_repositories:/soft/fonts/simsun/* $font_dir/
     yum install -y mkfontscale  fontconfig
     mkfontscale && mkfontdir && fc-cache -fv
     fc-list :lang=zh
 }
 
 ntp_install(){
-    #
-    get_time
-    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@192.168.0.43:/soft/ntp/install_ntp_v2.sh  ./ && sh install_ntp_v2.sh
+    #这个服务如果安装的话，好像就不需要在crontab中添加同步时间的定时任务了
+    get_time "安装配置ntp服务"
+    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@$remote_repositories:/soft/ntp/install_ntp_v2.sh  ./ && sh install_ntp_v2.sh
     RETVAL=$?
     if [ $RETVAL -eq 0 ]; then
         echo "The service of ntpd is already setted " |tee -a $LOG
@@ -312,8 +330,8 @@ ntp_install(){
 
 host_rename(){
     #when use this function,please in this fashion:"hostname zqsign",and the parameter of "zqsign" is what you want to set for the hostmechine
-    get_time
-    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@192.168.0.43:/soft/scripts/rename_v0.1.sh  ./ && sh rename_v0.1.sh $1
+    get_time "修改hostname"
+    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@$remote_repositories:/soft/scripts/rename_v0.1.sh  ./ && sh rename_v0.1.sh $1
     RETVAL=$?
     if [ $RETVAL -eq 0 ]; then
         echo "The hostname is already resetting ,please reconnect this host mechine " |tee -a $LOG
@@ -323,7 +341,7 @@ host_rename(){
 }
 
 jdk_install(){
-    get_time
+    get_time "安装配置jdk"
     java_dir="/usr/local/java"
     java_value=$(rpm -qa |grep -e ^java|wc -l)
     value_diyjavapath=$(egrep "JAVA_HOME|JRE_HOME" /etc/profile |wc -l )
@@ -340,16 +358,16 @@ jdk_install(){
         mkdir $java_dir
         echo "mkdir dir $java_dir " |tee -a $LOG
     else
-        bin/rm -rf $java_dir/*
+        /bin/rm -rf $java_dir/*
     fi
 
-    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@192.168.0.43:/soft/java/jdk-8u171-linux-x64.tar.gz $java_dir
+    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@$remote_repositories:/soft/java/jdk-8u171-linux-x64.tar.gz $java_dir
     tar xzf $java_dir/jdk-8u171-linux-x64.tar.gz -C $java_dir/
-    mv $java_dir/jdk1.8.0_171/* $java_dir/
+    rsync -aP  $java_dir/jdk1.8.0_171/* $java_dir/
     /bin/rm -rf $java_dir/jdk1.8.0_171 $java_dir/jdk-8u171-linux-x64.tar.gz
 
     if [[ $value_diyjavapath -ge 1 ]]; then
-        for i in JAVA_HOME JRE_HOME PATH CLASS_PATH;do
+        for i in "export JAVA_HOME=" "export JRE_HOME=" "export PATH=" "export CLASS_PATH=";do
             sed -i "/$i/d" /etc/profile
             sed -i "/#Set environment variables for Java/d" /etc/profile
         done
@@ -366,21 +384,21 @@ EOF
     source /etc/profile
 
     if [[ $(java -version 2>&1|grep "1.8"|wc -l)  -gt 0 ]];then
-        echo "java 1.8  is already be installed in this system" |tee -a $LOG
+        get_time "java 1.8  is already be installed in this system"
     fi
 }
 
 tomcat_install(){
-    get_time
+    get_time "安装tomcat"
     value_tomcat_dir=$(ls /usr/local/ |grep tomcat |wc -l)
     tomcat_dir="/usr/local/tomcat"
     if [ $value_tomcat_dir -ne 0 ]; then
         /bin/rm -rf /usr/local/*tomcat*
     fi
-    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@192.168.0.43:/soft/tomcat/apache-tomcat-8.0.52.tar.gz /usr/local/src/
-    tar /usr/local/src/apache-tomcat-8.0.52.tar.gz -C /usr/local/src/
-    mv /usr/local/src/apache-tomcat-8.0.52 /usr/local/tomcat
-    echo "Install tomcat is already done " |tee -a $LOG
+    rsync -aP -e "ssh -o StrictHostKeyChecking=no"  root@$remote_repositories:/soft/tomcat/apache-tomcat-8.0.52.tar.gz /usr/local/src/
+    tar xzfP /usr/local/src/apache-tomcat-8.0.52.tar.gz -C /usr/local/src/
+    rsync -aP  /usr/local/src/apache-tomcat-8.0.52 /usr/local/tomcat
+    get_time  "Install tomcat is already done"
 }
 
 nginx_install(){
@@ -391,17 +409,22 @@ system_init() {
 	##此函数将设置调整一些系统的服务参数
 	close_X11
 	sleep 2
-	change_vim
-	sleep 2
+	##可能有一些会用到yum安装的软件，所以在安装所有软件的时候，先用yum安装一些必备的软件。
+	modify_yumrepo
+	##配置sshd链接并做无秘钥登录
+    sleep 2
 	ssh_set
+	##设置一些关于vim的
+	sleep 2
+	change_vim
+	#一下是关闭iptables和selinux的
 	sleep 2
 	close_iptables
 	sleep 2
 	close_selinux
 	sleep 2
+	##关于时间的set_time
 	time_set
-	sleep 2
-	modify_yumrepo
 	sleep 2
 	service_setting
 	sleep 2
@@ -413,6 +436,7 @@ system_init() {
 	sleep 2
 	ntp_install
 	sleep 2
+	##host_rename zqsign 其中的zqsign是需要重命名主机名的前缀
 	host_rename zqsign
 	sleep 2
     jdk_install
@@ -421,8 +445,7 @@ system_init() {
 }
 
 if [[ $# -eq 0 ]]; then
-	\033[32m file handel has been successfully changed \033[0m
-    echo -e  "\033[32m The funciton of this scripts is [close_X11,change_vim,ssh_set,close_iptables,close_selinux,time_set,modify_yumrepo,service_setting,system_core,safe_rm,fonts_install,ntp_install,host_rename,jdk_install.tomcat_install ] ,this function can be used by option of '-m' and '-s' \033[0m "
+    echo -e  "\033[1;32m The funciton of this scripts is [close_X11,change_vim,ssh_set,close_iptables,close_selinux,time_set,modify_yumrepo,service_setting,system_core,safe_rm,fonts_install,ntp_install,host_rename,jdk_install.tomcat_install ] ,this function can be used by option of '-m' and '-s' \033[0m "
     echo "Usage: $0 -a  is install all functions"
     echo "Usage: $0 -s function   install a single function"
     echo "Usage: $0 -m function1 function2 ....   install multiple functions"
@@ -439,26 +462,49 @@ elif [[ $# -eq 1 ]]; then
             echo "Usage: $0 -s function   install a single function"
             echo "Usage: $0 -m function1 function2 ....   install multiple functions"
             echo "Usage: $0 -h  print the help messages"
-                ;;
+        ;;
+        *)
+            echo -e  "\033[1;32m The funciton of this scripts is [close_X11,change_vim,ssh_set,close_iptables,close_selinux,time_set,modify_yumrepo,service_setting,system_core,safe_rm,fonts_install,ntp_install,host_rename,jdk_install.tomcat_install ] ,this function can be used by option of '-m' and '-s' \033[0m "
+            echo "Usage: $0 -a  is install all functions"
+            echo "Usage: $0 -s function   install a single function"
+            echo "Usage: $0 -m function1 function2 ....   install multiple functions"
+            echo "Usage: $0 -h  print the help messages"
+        ;;
     esac
 elif [[ $# -gt 1 ]]; then
     case $1 in
         -s)
-            echo "Start install $2"
-            $2
+            if [[ $2 = "host_rename" ]]; then
+#                host_rename zqsign 其中的zqsign是需要重命名主机名的前缀
+                $2 zqsign
+            else
+                echo "Start install $2"
+                $2
+            fi
         ;;
         -m)
             for i in $*
             do
                 if [[ $i = "-m" ]]; then
                     continue
+                elif [[ $i = "host_rename" ]];then
+#                    host_rename zqsign 其中的zqsign是需要重命名主机名的前缀
+                    $2 zqsign
                 else
                     echo "$i"
-#                    $i
+                    $i
                 fi
             done
             echo "done"
         ;;
+        *)
+            echo -e  "\033[1;32m The funciton of this scripts is [close_X11,change_vim,ssh_set,close_iptables,close_selinux,time_set,modify_yumrepo,service_setting,system_core,safe_rm,fonts_install,ntp_install,host_rename,jdk_install.tomcat_install ] ,this function can be used by option of '-m' and '-s' \033[0m "
+            echo "Usage: $0 -a  is install all functions"
+            echo "Usage: $0 -s function   install a single function"
+            echo "Usage: $0 -m function1 function2 ....   install multiple functions"
+            echo "Usage: $0 -h  print the help messages"
+        ;;
+
     esac
 fi
 
