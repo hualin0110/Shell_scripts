@@ -211,7 +211,7 @@ EOF
 		echo "The changing of the system core is ERROR ,please chech the options of system core " |tee -a $ERRORLOG
 	fi
 
-	get_time "打开文件描述符数量"
+	get_time "调整打开文件描述符数量"
 	if [[ -z `grep 'hard nofile 65536' /etc/security/limits.conf` ]];then
 		echo '* soft nofile 65536' >> /etc/security/limits.conf 
 		echo '* hard nofile 65536' >> /etc/security/limits.conf
