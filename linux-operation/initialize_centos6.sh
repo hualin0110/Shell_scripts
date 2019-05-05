@@ -11,9 +11,9 @@ ERRORLOG="$Log_Path/install.error"
 
 ##software from remote host
 #huaweicloud
-remote_repositories="192.168.0.43"
+#remote_repositories="192.168.0.43"
 #taixing
-#remote_repositories="192.168.1.210"
+remote_repositories="192.168.1.210"
 #ntp服务器server，如果是内网，请在此处填写内网地址。如果直接从外网同步时间，就用下面的ntp.api.bz
 ntp_server="ntp.api.bz"
 
@@ -211,7 +211,7 @@ EOF
 		echo "The changing of the system core is ERROR ,please chech the options of system core " |tee -a $ERRORLOG
 	fi
 
-	get_time "打开文件描述符数量"
+	get_time "调整打开文件描述符数量"
 	if [[ -z `grep 'hard nofile 65536' /etc/security/limits.conf` ]];then
 		echo '* soft nofile 65536' >> /etc/security/limits.conf 
 		echo '* hard nofile 65536' >> /etc/security/limits.conf
