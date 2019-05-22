@@ -53,6 +53,7 @@ close_X11() {
 	fi
 }
 
+
 change_vim(){
 	echo -e "Change vim setting "
 	echo 'set enc=cp936' > ~/.vimrc
@@ -225,6 +226,8 @@ EOF
 
 modify_yumrepo(){
 	get_time "配置yum源"
+	is_wget=`rpm -qa |grep wget |wc -l`
+	
 	yum install -y wget
 	cp -a  /etc/yum.repos.d /etc/yum.repos.d.bak
 	rm -rf /etc/yum.repos.d/*
@@ -254,6 +257,7 @@ safe_rm(){
 	if [[ ! -d $safe_rm_dir ]]; then
 		mkdir $safe_rm_dir
 	fi
+	##下面的这个’“EOF”‘ 可以将下面字符中的不管需不需转义，都不会转义。
 	cat >/usr/local/saferm.sh <<"EOF"
 #!/bin/bash
 #author: huaxuelin
@@ -266,7 +270,6 @@ trash_file=$*
 if [[ ! -d $Trash_Dir ]];then
     mkdir $Trash_Dir
 fi
-
 
 case $1 in
 	-f )
