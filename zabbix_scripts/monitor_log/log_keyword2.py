@@ -90,14 +90,14 @@ def check_log(log_path ,error_key):
 
 # 帮助
 def show_help():
-    print '''
+    print('''
     HELP:
         %s [LOG_PATH] [ERROR_KEY]
             LOG_PATH:   absolute path
             ERROR_KEY:  keyword,multi use '_' separate.
         EXP:
             %s /var/log/tomcat.log error_warning
-    ''' %(sys.argv[0] ,sys.argv[0])
+    ''' %(sys.argv[0] ,sys.argv[0]))
     sys.exit(1)
 
 

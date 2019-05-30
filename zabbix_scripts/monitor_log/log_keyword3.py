@@ -13,11 +13,10 @@ import os
 import subprocess
 
 # 定义zabbix安装目录
-zabbix_base = subprocess.getoutput \
-    ('ps -ef |grep zabbix_agentd|grep -v "grep"|awk \'{print $NF}\'|uniq|awk -F"sbin" \'{print $1}\'|head -n1');
+zabbix_base = subprocess.getoutput('ps -ef |grep zabbix_agentd|grep -v "grep"|awk \'{print $NF}\'|uniq|awk -F"sbin" \'{print $1}\'|head -n1')
 # print zabbix_base;
-# 将日志文件最后一行记录到tmp文件，用于下一次检测关键字时定义开头,文件格式“日志绝对路径 上一次检测的最后一行的行号”
-zabbix_monitor_log_tmp = zabbix_base +'script/tomcat/monitor_log_line.safe'
+# # 将日志文件最后一行记录到tmp文件，用于下一次检测关键字时定义开头,文件格式“日志绝对路径 上一次检测的最后一行的行号”
+# zabbix_monitor_log_tmp = zabbix_base +'script/tomcat/monitor_log_line.safe'
 
 # #以下文件是测试时使用的，因为本机没有这个zabbix
 # zabbix_monitor_log_tmp = '/home/hualin/桌面/pipp/monitor_log_line.safe'
@@ -27,7 +26,8 @@ def init_log_tmp(log_path):
     if os.path.exists(os.path.split(zabbix_monitor_log_tmp)[0]):
         pass
     else:
-        subprocess.getoutput('mkdir -p %s ' %(zabbix_monitor_log_tmp[0]) )
+        print()
+        subprocess.getoutput('mkdir -p %s ' %(os.path.split(zabbix_monitor_log_tmp)[0]) )
     # 检测tmp文件是否存在，不存在创建
     if os.path.exists(zabbix_monitor_log_tmp):
         pass
@@ -44,12 +44,11 @@ def check_log(log_path ,error_key):
         print("\nERROR %s not found!!!"%log_path)
         show_help()
     # 从zabbix_monitor_log_tmp中找到log_path上一次读取的最后一行的行号，如果之前没有记录，则认为是从第一行开始
-    init_log_tmp(log_path);
+    init_log_tmp(log_path)
     # 获取log_path现在共有多少行
     log_path_line = subprocess.getoutput('wc -l  %s |awk \'{print $1}\''%log_path)
     # 从zabbix_monitor_log_tmp中获取上次检测时的行号
-    log_path_line_last = subprocess.getoutput \
-        ('awk \'{if ($1=="%s") {print $2}}\' %s'%(log_path,zabbix_monitor_log_tmp))
+    log_path_line_last = subprocess.getoutput('awk \'{if ($1=="%s") {print $2}}\' %s'%(log_path,zabbix_monitor_log_tmp))
     # 如果log_path_line_last为空，说明这个日志文件之前没有检测过，现在认为log_path_line_last=0
     if len(log_path_line_last) == 0:
         log_path_line_last =0
@@ -67,7 +66,7 @@ def check_log(log_path ,error_key):
         print(key_count)
         sys.exit(0)
     else:
-        cha = int(log_path_line) - int(log_path_line_last);
+        cha = int(log_path_line) - int(log_path_line_last)
     # 把关键字字符串做处理，将分隔符由，改为|
     error_key_new = subprocess.getoutput('echo %s|sed \'s/,/|/g\''%(error_key))
 
@@ -94,14 +93,18 @@ def show_help():
             ERROR_KEY:  keyword,multi use ',' separate.
         EXP:
             %s /var/log/tomcat.log error_warning
-    ''') %(sys.argv[0] ,sys.argv[0])
+    '''%(sys.argv[0],sys.argv[0]))
     sys.exit(1)
-
 
 if __name__ == '__main__':
     if len(sys.argv) == 3:
+
         log_path =sys.argv[1]
         error_key =sys.argv[2]
+        app_name = subprocess.getoutput("echo %s |awk -F '/' '{ print $(NF-2) }'"%log_path)
+        # 将日志文件最后一行记录到tmp文件，用于下一次检测关键字时定义开头,文件格式“日志绝对路径 上一次检测的最后一行的行号”
+        zabbix_monitor_log_tmp = "%sscript/tomcat/%s_line.safe"%(zabbix_base,app_name)
+        ###error_key 这个地方可以用多个key同事进来进行检索，不过推荐只用一个吧
         check_log(log_path ,error_key)
     else:
         show_help()

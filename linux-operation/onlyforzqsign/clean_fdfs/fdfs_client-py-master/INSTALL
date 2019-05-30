@@ -1,6 +1,2 @@
-
-Please use
- sudo python setup.py install
-
-and report errors to scott yuan (scottzer8@gmail.com)
-
+deb http://us.archive.ubuntu.com/ubuntu/ precise-updates main restricted
+deb http://us.archive.ubuntu.com/ubuntu/ precise-updates main restricted
