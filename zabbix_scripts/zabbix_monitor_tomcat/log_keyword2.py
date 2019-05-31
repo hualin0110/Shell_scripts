@@ -2,11 +2,10 @@
 # -*- coding: UTF-8 -*-
 #########################################################################
 # 监控日志，分析关键字，供zabbix报警
-# 将脚本放在/usr/local/zabbix/script/linux目录下，给zabbix用户赋予执行权限
-# Create Date :  2015-1-9
-# Written by : shanks
-# Version : 1.0
-#python-version:2.X
+# 将脚本放在/usr/local/zabbix/sbin/目录下，给zabbix用户赋予执行权限
+# Create Date :  2019-05-30
+# Written by : yuwei
+# python-version:2
 #########################################################################
 import sys,commands,os
 

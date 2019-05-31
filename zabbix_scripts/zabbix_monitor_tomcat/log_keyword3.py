@@ -2,11 +2,10 @@
 # -*- coding: UTF-8 -*-
 #########################################################################
 # 监控日志，分析关键字，供zabbix报警
-# 将脚本放在/usr/local/zabbix/script/linux目录下，给zabbix用户赋予执行权限
-# Create Date :  2015-1-9
-# Written by : shanks
-# Version : 1.0
-#python-version:3
+# 将脚本放在/usr/local/zabbix/sbin/目录下，给zabbix用户赋予执行权限
+# Create Date :  2019-05-30
+# Written by : yuwei
+# python-version:3
 #########################################################################
 import sys
 import os
@@ -93,7 +92,7 @@ if __name__ == '__main__':
         appdir=subprocess.getoutput("ps -ef |grep %s|grep -v grep |awk '{ print $(NF -4) }'|awk -F '=' '{ print $2 }'"%app_name).strip('\n')
         log_path="%s/logs/catalina.out"%(appdir)
         # 将日志文件最后一行记录到tmp文件，用于下一次检测关键字时定义开头,文件格式“日志绝对路径 上一次检测的最后一行的行号”
-        zabbix_monitor_log_tmp = "%ssbin/tomcat/%s_line.safe"%(zabbix_base,app_name)
+        zabbix_monitor_log_tmp = "%ssbin/tomcat/%s_%s_line.safe"%(zabbix_base,app_name,error_key)
         ###error_key 这个地方可以用多个key同事进来进行检索，不过推荐只用一个吧
         check_log(log_path ,error_key)
     else:
