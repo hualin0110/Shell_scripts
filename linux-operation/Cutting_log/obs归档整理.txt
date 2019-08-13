@@ -1,0 +1,17 @@
+###一下操作都是在obs里面
+
+###确认配置授权
+./obsutil config -i=TOBCIBDX37P9SEUXGXQ2 -k=UxFpCki8KfvxS6A5gjVFbmNoieHmyFJ8g62roS5W -e=https://obs.cn-north-1.myhuaweicloud.com
+
+
+##创建桶
+./obsutil mb  obs://collect-logs-for-zqservice
+##创建目录
+./obsutil mkdir  obs://collect-logs-for-zqservice/zqsign-service-saas-web/192.168.1.1/2019-09-09/
+##检查目录是否存在
+./obsutil stat  obs://collect-logs-for-zqservice/zqsign-service-saas-web/192.168.1.1/2019-09-09/
+##上传文件
+./obsutil cp /usr/local/zqsign-service-saas-web/logs/catalina.out obs://collect-logs-for-zqservice/zqsign-service-saas-web/192.168.1.1/2019-09-09/
+
+##将一个目录上传，可以使用include参数，指定以通配符方式通配的文件上传
+./obsutil cp /root/obs/obsutil_linux_amd64_5.1.6/  obs://collect-logs-for-zqservice/zqsign-service-saas-web/192.168.1.1/2019-09-09/ -r  -include=*log

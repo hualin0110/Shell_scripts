@@ -1,0 +1,99 @@
+#!/bin/bash
+# /etc/init.d/tomcatd
+# Tomcat auto-start
+# Source function library.
+. /etc/init.d/functions
+# source networking configuration.
+. /etc/sysconfig/network
+RETVAL=0
+basepath=$(cd `dirname $0`; cd .. ; pwd)
+
+# CATALINA_HOME="/opt/apache-tomcat"
+export JAVA_HOME="/usr/local/java"
+export CATALINA_HOME=$basepath
+export CATALINA_BASE=$basepath
+get_pid()
+{
+    java_count=$(ps -aux |grep $CATALINA_HOME| grep -v "$CATALINA_HOME/bin/tomcatd" |grep -v grep|wc -l)
+    if [[ $java_count -eq 0 ]];then
+        echo 0
+    else
+        echo $(ps -aux |grep $CATALINA_HOME| grep -v "$CATALINA_HOME/bin/tomcatd" |grep -v grep|awk '{print $2}')
+    fi
+}
+startt()
+{
+    java_pid=$(get_pid)
+    if [[ $java_pid -eq 0 ]]; then
+        if [[ -f $CATALINA_HOME/bin/startup.sh ]]; then
+            /bin/bash $CATALINA_HOME/bin/startup.sh
+            RETVAL=$?
+            if [[ $RETVAL -eq 0 ]]; then
+                echo -e "\033[32m${CATALINA_HOME##*/} has already started\033[0m"
+            else
+                echo -e "\033[31mRun ${CATALINA_HOME##*/} occur Error\033[0m"
+            fi
+        else
+            echo -e "\033[31mCould't find startup scripts\033[0m"
+        fi
+    else
+        echo -e "\033[32mThe ${CATALINA_HOME##*/} is running,\nThe ${CATALINA_HOME##*/}'s Pid is $java_pid !!!\033[0m"
+        echo -e "\033[32mPlease don't run it again!!!\033[0m"
+    fi
+}
+stopp()
+{
+    if [ -f $CATALINA_HOME/bin/shutdown.sh ];then
+        /bin/bash $CATALINA_HOME/bin/shutdown.sh
+        RETVAL=$?
+        if [[ $RETVAL -eq 0 ]]; then
+            sleep 2
+            java_pid=$(get_pid)
+            if [[ $java_pid -ne 0 ]]; then
+                kill $java_pid
+                echo -e "\033[31mUsing kill Tomcat's Pid\033[0m"
+            fi
+            echo -e "\033[32mTomcat is already stoped\033[0m"
+        else
+            echo -e "\033[31mStoping ${CATALINA_HOME##*/} is Error,please check it\033[0m"
+        fi
+        return $RETVAL
+    else
+        echo -e "\033[31mCould't find shutdown scripts\033[0m"
+    fi
+}
+
+statuss(){
+    java_pid=$(get_pid)
+    if [[ $java_pid -ne 0 ]]; then
+        echo -e "\033[32mThe ${CATALINA_HOME##*/} is running \nThe pid is\033[0m \033[31m$java_pid\033[0m !"
+    else
+        echo -e "\033[31mThe ${CATALINA_HOME##*/} is dead \033[0m"
+    fi
+}
+
+case "$1" in
+start)
+    echo -e "\033[33mStart Runing ${CATALINA_HOME##*/}\033[0m"
+    startt
+    ;;
+stop)
+    echo -e "\033[33mStart stop Tomcat\033[0m"
+    stopp
+    ;;
+restart)
+     echo -e "\033[33mRestaring Tomcat\033[0m"
+     stopp
+     sleep 1
+     startt
+     ;;
+status)
+	echo -e "\033[33mEcho tomcat's status\033[0m"
+	statuss
+	;;
+*)
+        echo -e "\033[5;33mUsage: $0 {start|stop|restart|status}\033[0m"
+        exit 1
+        ;;
+esac
+exit $RETVAL
