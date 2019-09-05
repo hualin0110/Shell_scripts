@@ -21,7 +21,10 @@ function check_obsutil() {
     if [[ ! -d $obsutil_dir ]]; then
         rsync -aP -e "ssh -o StrictHostKeyChecking=no" root@192.168.0.43:/soft/obsutil /usr/local/
     fi
-    $obsutilrun config -i=TOBCIBDX37P9SEUXGXQ2 -k=UxFpCki8KfvxS6A5gjVFbmNoieHmyFJ8g62roS5W -e=https://obs.cn-north-1.myhuaweicloud.com
+    if [[ $(grep "ak=drvveuVbFS0Uz0cwTXF2jSNQO3p3NmPFlYrqonbCwCU=" /root/.obsutilconfig |wc -l) -eq 0 ]]; then
+        $obsutilrun config -i=TOBCIBDX37P9SEUXGXQ2 -k=UxFpCki8KfvxS6A5gjVFbmNoieHmyFJ8g62roS5W -e=https://obs.cn-north-1.myhuaweicloud.com
+    fi
+
 }
 
 ##获取运行中的tomcat的目录
@@ -31,21 +34,27 @@ function get_tomcat_dir() {
 
 function archive_to_obs() {
     #检查obs中是否有相应项目在某个主机中的日志，按照天的维度进行存储
-    yestday_obs_dir="obs://collect-logs-for-zqservice/${Tomcat_dir##*/}/$host_ip/$yestday_date/"
-    check_obsdir=$($obsutilrun stat $yestday_obs_dir|grep Error|grep 404|wc -l)
+    obs_dir="obs://collect-logs-for-zqservice/${Tomcat_dir##*/}/$host_ip/"
+    check_obsdir=$($obsutilrun stat $obs_dir|grep Error|grep 404|wc -l)
     if [[ $check_obsdir -ne 0 ]]; then
-        $obsutilrun mkdir $yestday_obs_dir
+        $obsutilrun mkdir $obs_dir
     fi
 
-    #进入项目日志目录，将归档后的catalina.out日志上传到obs中
+    #使用cp的方式归档，进入项目日志目录，将归档后的catalina.out日志上传到obs中
     cd $Tomcat_dir/logs/
-    for filename in $(ls catalina.2*.out server.2*.zip server.log_2*log);do
-        $obsutilrun cp $filename $yestday_obs_dir
+        pwd
+    for filename in $(ls server.2*.zip);do
+        $obsutilrun sync $filename $obs_dir
+    done
+    for filename in $(ls catalina.2*.out server.log_2*log);do
+        /bin/tar czfP $filename.tgz $filename
+        $obsutilrun sync $filename.tgz $obs_dir
+    done
+    for filename in $(ls catalina*.tgz|grep -E -v "catalina.2*.out.tgz");do
+        $obsutilrun sync $filename $obs_dir
     done
 }
 
-###Start run archive the tocmat's log
-echo "Starting archive the logs"
 #检查obsutil是否安装
 check_obsutil
 
