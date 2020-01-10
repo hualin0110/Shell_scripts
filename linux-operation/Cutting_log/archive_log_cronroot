@@ -1,0 +1,2 @@
+1 0 * * * /bin/sh /root/huaxuelin/cut_archive_log.sh >>/root/huaxuelin/cut_archive_log.log 2>&1 &
+#0 0 * * * /usr/bin/rsync -aP -e "ssh -o StrictHostKeyChecking=no" root@192.168.0.43:/soft/scripts/archive_log/* /root/huaxuelin/ >>/root/huaxuelin/crontab.log 2>&1 &
