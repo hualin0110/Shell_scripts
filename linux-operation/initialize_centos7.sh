@@ -393,7 +393,7 @@ jdk_install(){
     fi
 
 cat >>/etc/profile <<"EOF"
-#Set environment variables for Java by 郁唯
+#Set environment variables for Java by xuelin_hua
 export PATH=/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
 export JAVA_HOME=/usr/local/java
 export JRE_HOME=/usr/local/java/jre
